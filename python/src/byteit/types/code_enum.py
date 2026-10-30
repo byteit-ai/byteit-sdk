@@ -1,0 +1,40 @@
+# This file was auto-generated from the ByteIt API definition.
+
+import typing
+
+CodeEnum = typing.Union[
+    typing.Literal[
+        "ARCHIVE_EMPTY",
+        "ARCHIVE_INVALID",
+        "EMPTY_MODEL_RESPONSE",
+        "EXTRACT_JOB_NOT_FOUND",
+        "FILE_TOO_LARGE",
+        "FORBIDDEN",
+        "IMAGE_CORRUPTED",
+        "INSUFFICIENT_CREDITS",
+        "INTERNAL_SERVER_ERROR",
+        "INVALID_VALUE",
+        "JOB_ALREADY_FINALIZED",
+        "JOB_NOT_FOUND",
+        "MALFORMED_MODEL_RESPONSE",
+        "MISSING_REQUIRED_FIELD",
+        "MODEL_PROCESSING_ERROR",
+        "NO_TEXT_EXTRACTED",
+        "PDF_CORRUPTED",
+        "PDF_NOT_VALID",
+        "PDF_PASSWORD_PROTECTED",
+        "PDF_TRUNCATED",
+        "REFUND_DESTINATION_MISSING",
+        "RESOURCE_NOT_FOUND",
+        "RESULT_EXPIRED",
+        "RTF_NOT_VALID",
+        "SERVICE_UNAVAILABLE",
+        "STATE_CONFLICT",
+        "UNAUTHORIZED",
+        "UNSUPPORTED_FILE_TYPE",
+        "UNSUPPORTED_OFFICE_TYPE",
+        "UNSUPPORTED_SPREADSHEET",
+        "UPSTREAM_ERROR",
+    ],
+    typing.Any,
+]

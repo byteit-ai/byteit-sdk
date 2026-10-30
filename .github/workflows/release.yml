@@ -1,0 +1,108 @@
+name: Release
+
+# Publishes a release by hand (Actions → Release → Run workflow): nothing is
+# published automatically. The ByteIt SDK pipeline pushes a
+# `chore(release): X.Y.Z` commit to main; CI tests every SDK on it, and this
+# workflow then publishes exactly that commit.
+#
+# Refuses to run unless it runs on main, the typed version equals VERSION, the
+# latest commit is `chore(release): <version>`, CI passed on that commit, the
+# tag does not exist yet and CHANGELOG.md has a dated section for it. The
+# release notes cover every version since the last published one.
+#
+# Only the Python package goes to a registry (PyPI), through PyPI Trusted
+# Publishing: no token is stored. Every release is tagged `vX.Y.Z`.
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version to publish (must equal VERSION on main)"
+        type: string
+        required: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  build:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: read
+    outputs:
+      tag: ${{ steps.meta.outputs.tag }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - name: Validate release
+        id: meta
+        env:
+          REQUESTED: ${{ inputs.version }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          CI="$(gh run list --workflow ci.yml --commit "$GITHUB_SHA" --json conclusion --jq '.[0].conclusion')"
+          if [ "$CI" != success ]; then
+            echo "::error::CI has not passed on $GITHUB_SHA (got '${CI:-no run}'); wait for it or fix it first"
+            exit 1
+          fi
+          .github/scripts/release_meta.sh "$REQUESTED" "$(tr -d '[:space:]' < VERSION)" \
+            "$(git log -1 --format=%s)"
+      - name: Test and build the Python package
+        working-directory: python
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e . pytest pytest-asyncio build twine
+          pytest -q
+          python -m build
+          twine check dist/*
+      - uses: actions/upload-artifact@v4
+        with:
+          name: python-dist
+          path: python/dist/
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release-notes
+          path: ${{ steps.meta.outputs.notes_file }}
+
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+    environment: release
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@v5
+        with:
+          name: python-dist
+          path: dist
+      - uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          skip-existing: true
+
+  tag:
+    needs: [build, publish]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/download-artifact@v5
+        with:
+          pattern: "*"
+          path: assets
+      - name: Tag and GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ needs.build.outputs.tag }}
+        run: |
+          gh release create "$TAG" assets/python-dist/* --target "$GITHUB_SHA" \
+            --title "$TAG" --notes-file assets/release-notes/*

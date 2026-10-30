@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="src/ByteIt.Test/ByteIt.Test.csproj" />
+  <Project Path="src/ByteIt/ByteIt.csproj" />
+</Solution>

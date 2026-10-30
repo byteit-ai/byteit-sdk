@@ -1,0 +1,22 @@
+# Build and install output of the SDKs.
+__pycache__/
+*.py[cod]
+.venv/
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+node_modules/
+.pnpm-store/
+dist/
+build/
+bin/
+obj/
+.gradle/
+.idea/
+.vscode/
+.DS_Store
+vendor/
+target/
+.build/
+.bundle/
